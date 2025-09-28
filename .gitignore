@@ -1,0 +1,26 @@
+# --- 보안 (매우 중요!) ---
+# 구글 클라이언트 인증 정보
+credentials.json
+# 사용자 개인 인증 토큰
+token.json
+
+
+# --- 파이썬 ---
+# 파이썬 캐시 파일
+__pycache__/
+*.pyc
+
+
+# --- 가상환경 폴더 (사용하는 경우) ---
+.venv
+venv
+env
+
+
+# --- IDE 및 OS ---
+# VSCode 설정
+.vscode/
+# Mac OS
+.DS_Store
+# Windows
+Thumbs.db

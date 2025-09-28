@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "뉴스레터 요약",
+  "version": "1.0",
+  "description": "받은 뉴스레터를 요약하고 분류해줍니다.",
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:5000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
