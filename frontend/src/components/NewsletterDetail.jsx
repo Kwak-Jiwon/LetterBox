@@ -1,15 +1,19 @@
 // frontend/src/components/NewsletterDetail.jsx
+
 import React, { useState } from 'react';
 import './NewsletterDetail.css';
 
-// ... 아이콘 컴포넌트들 ...
+// 아이콘을 사용하기 위해 임시로 텍스트 아이콘을 넣어둡니다.
+const BackIcon = () => '←'; 
+const HighlightIcon = () => '✨';
+const CategoryIcon = () => '📂';
+const SummaryIcon = () => '📝';
 
 function NewsletterDetail({ newsletter, onBack }) {
   const [aiSummary, setAiSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSummarizeClick = async () => {
-    // 요약할 본문이 없으면 실행하지 않음
     if (!newsletter?.body) {
       setAiSummary("요약할 원본 데이터가 없습니다.");
       return;
@@ -37,8 +41,12 @@ function NewsletterDetail({ newsletter, onBack }) {
       setIsLoading(false);
     }
   };
+  React.useEffect(() => {
+    if (newsletter) {
+      console.log("상세 뷰에 전달된 newsletter.body 내용:", newsletter.body);
+    }
+  }, [newsletter]);
 
-  // newsletter 객체가 없을 경우를 대비한 렌더링
   if (!newsletter) {
     return <div className="detail-container">뉴스레터를 선택해주세요.</div>
   }
@@ -47,7 +55,7 @@ function NewsletterDetail({ newsletter, onBack }) {
     <div className="detail-container">
       <header className="detail-page-header">
         <button onClick={onBack} className="detail-back-button">
-          ← 목록으로 돌아가기
+          <BackIcon /> 목록으로 돌아가기
         </button>
       </header>
 
@@ -56,13 +64,36 @@ function NewsletterDetail({ newsletter, onBack }) {
         <p className="detail-sender">{newsletter.sender}</p>
 
         <div className="detail-actions">
-           {/* ... 버튼들 ... */}
+          <button onClick={handleSummarizeClick} className="action-button" disabled={isLoading}>
+            <SummaryIcon /> {isLoading ? '요약 중...' : 'AI 요약'}
+          </button>
+          <button className="action-button">
+            <HighlightIcon /> 하이라이트
+          </button>
+          <select className="action-select">
+            <option disabled selected>
+              <CategoryIcon /> 카테고리 변경
+            </option>
+            <option>기술</option>
+            <option>경제</option>
+            <option>디자인</option>
+            <option>미분류</option>
+          </select>
         </div>
         
         <div className="detail-content-area">
           <h3>{aiSummary ? 'AI 요약' : '전체 본문'}</h3>
-          {/* newsletter.body가 비어있을 경우를 대비한 메시지 추가 */}
-          <p>{aiSummary || newsletter.body || "표시할 본문 내용이 없습니다."}</p>
+          
+          {/* 여기가 핵심: aiSummary가 있으면 p 태그로, 없으면 iframe으로 본문을 렌더링합니다. */}
+          {aiSummary ? (
+            <p className="ai-summary-text">{aiSummary}</p>
+          ) : (
+            <iframe
+              srcDoc={newsletter.body || '<html><body>표시할 본문 내용이 없습니다.</body></html>'}
+              className="email-iframe"
+              title={newsletter.subject}
+            />
+          )}
         </div>
       </div>
     </div>

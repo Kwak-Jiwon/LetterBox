@@ -1,4 +1,4 @@
-# app.py (수정 완료된 최종 버전)
+# app.py (인코딩 자동 감지 기능이 추가된 최종 버전)
 
 import os.path
 import base64
@@ -32,30 +32,42 @@ print("AI 요약 모델 로드 완료.")
 
 
 # --- Helper 함수 정의 ---
+
+# <<-- 새로 추가된 함수: 이메일 헤더에서 인코딩(charset)을 추출합니다 -->>
+def get_charset_from_headers(headers):
+    content_type = next((h['value'] for h in headers if h['name'].lower() == 'content-type'), None)
+    if content_type and 'charset=' in content_type:
+        charset = content_type.split('charset=')[-1].strip()
+        # "euc-kr" 같은 따옴표를 제거
+        return charset.replace('"', '')
+    return 'utf-8' # 기본값은 utf-8
+
 def is_newsletter(body_text: str) -> bool:
-    return True
-"""    tail = body_text[-1500:] if len(body_text) > 1500 else body_text
+    tail = body_text[-1500:] if len(body_text) > 1500 else body_text
     has_unsub = bool(UNSUB_REGEX.search(tail))
     has_addr = bool(KOREA_ADDR_REGEX.search(tail))
     return has_unsub and has_addr
-"""
 
-def get_message_body(payload):
+def get_message_body(payload, headers):
+    charset = get_charset_from_headers(headers) # 헤더에서 인코딩 방식 가져오기
+    
     if 'parts' in payload:
         for part in payload['parts']:
             if part.get('mimeType') == 'text/html':
                 data = part.get('body', {}).get('data')
-                if data: return base64.urlsafe_b64decode(data).decode('utf-8', errors="ignore")
+                if data: return base64.urlsafe_b64decode(data).decode(charset, errors="ignore")
         for part in payload['parts']:
             if part.get('mimeType') == 'text/plain':
                 data = part.get('body', {}).get('data')
-                if data: return base64.urlsafe_b64decode(data).decode('utf-8', errors="ignore")
+                if data: return base64.urlsafe_b64decode(data).decode(charset, errors="ignore")
         for part in payload['parts']:
-            text = get_message_body(part)
+            # 재귀 호출 시에는 해당 파트의 헤더를 사용해야 하지만, 복잡성을 위해 상위 헤더의 charset을 사용
+            part_headers = part.get('headers', headers)
+            text = get_message_body(part, part_headers)
             if text: return text
     else:
         data = payload.get('body', {}).get('data')
-        if data: return base64.urlsafe_b64decode(data).decode('utf-8', errors="ignore")
+        if data: return base64.urlsafe_b64decode(data).decode(charset, errors="ignore")
     return ""
 
 # --- Flask 앱 인스턴스 생성 ---
@@ -66,6 +78,7 @@ CORS(app)
 # --- API 라우트(경로) 정의 ---
 @app.route('/api/newsletters', methods=['GET'])
 def fetch_newsletters_api():
+    # ... (인증 로직은 이전과 동일) ...
     creds = None
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
@@ -91,30 +104,30 @@ def fetch_newsletters_api():
             headers = payload.get('headers', [])
             subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), '(제목 없음)')
             
-            body_text = get_message_body(payload)
+            # <<-- get_message_body에 headers 전달 -->>
+            body_text = get_message_body(payload, headers)
             if not body_text: continue
 
-            if is_newsletter(body_text):
+            if is_newsletter(body_text): # is_newsletter는 임시로 True로 둘 수 있습니다.
                 sender = next((h['value'] for h in headers if h['name'].lower() == 'from'), '(보낸사람 없음)')
-                
-                # 목록에서는 AI 요약 대신 Gmail 기본 요약(snippet)을 사용합니다.
                 newsletter_list.append({
                     "id": message['id'], 
                     "sender": sender, 
                     "subject": subject,
-                    "summary": msg.get('snippet', ''), # AI 요약이 아닌 snippet으로 수정
+                    "summary": msg.get('snippet', ''),
                     "body": body_text
                 })
         
         return jsonify(newsletter_list)
 
     except Exception as e:
-        print(f'뉴스레터 API 오류 발생: {e}') # 터미널에 에러 원인을 출력합니다.
+        print(f'뉴스레터 API 오류 발생: {e}')
         return jsonify({"error": "서버 내부 오류 발생"}), 500
 
 
 @app.route('/api/summarize', methods=['POST'])
 def summarize_text_api():
+    # ... (이전과 동일) ...
     try:
         data = request.get_json()
         if not data or 'text' not in data:
@@ -123,7 +136,6 @@ def summarize_text_api():
         text_to_summarize = data['text']
         summary = summarizer(text_to_summarize, max_length=200, min_length=50, do_sample=False)
         return jsonify({"summary": summary[0]['summary_text']})
-
     except Exception as e:
         print(f'요약 API 오류 발생: {e}')
         return jsonify({"error": "텍스트 요약 중 서버 오류 발생"}), 500
