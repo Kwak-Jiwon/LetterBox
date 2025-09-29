@@ -1,0 +1,24 @@
+/* frontend/src/App.css */
+
+/* 색상 변수 선언 */
+:root {
+  --primary-blue: #3b82f6;
+  --light-blue: #eff6ff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --background-color: #f9fafb;
+  --border-color: #e5e7eb;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Pretendard', sans-serif;
+  background-color: var(--background-color);
+}
+
+.main-content {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+}

@@ -1,0 +1,46 @@
+/* frontend/src/components/CategorySidebar.css */
+
+.sidebar {
+  width: 240px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px 0;
+  padding: 0 12px;
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.category-item:hover {
+  background-color: var(--light-blue);
+}
+
+.category-item.active {
+  background-color: var(--primary-blue);
+  color: white;
+  font-weight: 600;
+}
